@@ -1,4 +1,9 @@
+import os
 import sys
+
+import fsutils
+
+from project import project
 
 def action(func):
     func._action = True
@@ -25,15 +30,24 @@ class Builder(object):
             print(msg, file=sys.stderr)
             return
 
-        self._actions[action](self, target)
+        build_dir = os.path.join(project.build_dir,
+                                 ':'.join((self._name, action, target)))
+        if os.path.exists(build_dir):
+            os.removedirs(build_dir)
+
+        with fsutils.pushd(build_dir):
+            self._actions[action](self, target)
 
     @classmethod
     def from_name(cls, name):
         """Returns the Builder instance for the given builder name"""
-        return {
+        builder = {
             'image': ImageBuilder,
             'service': ServiceBuilder,
         }[name]()
+        builder._name = name
+        return builder
+
 
 class ImageBuilder(Builder):
     """Builder to manage pure Docker images under the
