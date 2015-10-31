@@ -34,11 +34,12 @@ class Builder(object):
 
         build_dir = os.path.join(project.build_dir,
                                  ':'.join((self._name, action, target)))
-        if os.path.exists(build_dir):
-            shutil.rmtree(build_dir)
+        shutil.rmtree(build_dir, ignore_errors=True)
 
         with fsutils.pushd(build_dir):
             self._actions[action](self, target)
+
+        shutil.rmtree(build_dir, ignore_errors=True)
 
     @classmethod
     def from_name(cls, name):
