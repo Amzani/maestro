@@ -1,4 +1,6 @@
 import os
+import shutil
+import subprocess
 import sys
 
 import fsutils
@@ -33,7 +35,7 @@ class Builder(object):
         build_dir = os.path.join(project.build_dir,
                                  ':'.join((self._name, action, target)))
         if os.path.exists(build_dir):
-            os.removedirs(build_dir)
+            shutil.rmtree(build_dir)
 
         with fsutils.pushd(build_dir):
             self._actions[action](self, target)
@@ -61,7 +63,14 @@ class ImageBuilder(Builder):
         image directory is copied in the build directory, followed by
         the content of the "<paperboy_root>/thrift/" directory.
         """
-        print('ImageBuilder: {}'.format(target))
+        image_dir = os.path.join(project.images_dir, target)
+        if not os.path.isdir(image_dir):
+            print('Unknown image \'{}\'.'.format(target), file=sys.stderr)
+            return
+
+        fsutils.clone(image_dir, '.')
+        fsutils.clone(project.thrift_dir, '.')
+        subprocess.run(('docker', 'build', '-t', target, '.'))
 
 class ServiceBuilder(Builder):
     @action
