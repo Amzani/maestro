@@ -6,6 +6,8 @@ import sys
 import fsutils
 
 from project import project
+from service import Service
+
 
 def action(func):
     func._action = True
@@ -73,10 +75,12 @@ class ImageBuilder(Builder):
         fsutils.clone(project.thrift_dir, '.')
         subprocess.run(('docker', 'build', '-t', target, '.'))
 
+
 class ServiceBuilder(Builder):
     @action
     def build(self, target):
-        print('ServiceBuilder: {}'.format(target))
+        service = Service(target)
+        print(service.dependencies)
 
     @action
     def test(self, target):

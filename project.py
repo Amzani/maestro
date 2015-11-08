@@ -16,6 +16,10 @@ class Project(object):
         return os.path.join(self._repo.working_dir, 'images')
 
     @property
+    def services_dir(self):
+        return os.path.join(self._repo.working_dir, 'services')
+
+    @property
     def thrift_dir(self):
         return os.path.join(self._repo.working_dir, 'thrift')
 
