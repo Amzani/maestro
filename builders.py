@@ -80,7 +80,17 @@ class ServiceBuilder(Builder):
     @action
     def build(self, target):
         service = Service(target)
-        print(service.dependencies)
+
+        # Build the image the service might depend on
+        if service.image_dependency is not None:
+            Builder.from_name('image').call('build', service.image_dependency)
+
+        fsutils.clone(service.path, '.')
+        fsutils.clone(project.thrift_dir, 'thrift')
+
+        docker_image_name = 'paperboy-s-' + target
+        subprocess.run(('docker', 'build', '-t', docker_image_name, '.'))
+
 
     @action
     def test(self, target):
