@@ -1,3 +1,4 @@
+import itertools
 import os
 import shutil
 import subprocess
@@ -68,7 +69,8 @@ class ImageBuilder(Builder):
         """
         image_dir = os.path.join(project.images_dir, target)
         if not os.path.isdir(image_dir):
-            print('Unknown image \'{}\'.'.format(target), file=sys.stderr)
+            msg = 'Unknown image \'{}\'. Assuming it already exists.'.format(target)
+            print(msg, file=sys.stderr)
             return
 
         fsutils.clone(image_dir, '.')
@@ -81,9 +83,12 @@ class ServiceBuilder(Builder):
     def build(self, target):
         service = Service(target)
 
-        # Build the image the service might depend on
-        if service.image_dependency is not None:
-            Builder.from_name('image').call('build', service.image_dependency)
+        # Build the images the service might depend on
+        deps = itertools.chain(
+            service.image_dependencies, service.build_dependencies)
+        for image in deps:
+            target = next(iter(image.values()))
+            Builder.from_name('image').call('build', target)
 
         fsutils.clone(service.path, '.')
         fsutils.clone(project.thrift_dir, 'thrift')
