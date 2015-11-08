@@ -42,9 +42,28 @@ def _desc_service(name):
             desc['name'], name)
         raise InvalidServiceError(msg)
 
-    if 'type' in desc and desc['type'] not in SERVICE_TYPE_IMAGES:
-        msg = 'Unknown type \'{}\''.format(desc['type'])
-        raise InvalidServiceError(msg)
+    # Process dependencies, and add service type image to them
+    if 'dependencies' not in desc:
+        desc['dependencies'] = []
+
+    if 'type' in desc:
+        if desc['type'] not in SERVICE_TYPE_IMAGES:
+            msg = 'Unknown type \'{}\''.format(desc['type'])
+            raise InvalidServiceError(msg)
+        desc['dependencies'].append({
+            '_build': SERVICE_TYPE_IMAGES[desc['type']]
+        })
+
+    for dep in desc['dependencies']:
+        if not isinstance(dep, dict):
+            msg = 'Invalid dependency: not an association.'
+            raise InvalidServiceError(msg)
+        if len(dep.keys()) != 1:
+            msg = 'Invalid dependency: more than one association.'
+            raise InvalidServiceError(msg)
+        if len(dep.keys() & set(('image', 'service', '_build'))) != 1:
+            msg = 'Invalid dependency: not a \'service\' or \'image\''
+            raise InvalidServiceError(msg)
 
     return desc
 
@@ -55,13 +74,20 @@ class Service(object):
 
     @property
     def dependencies(self):
-        return self._desc.get('dependencies', [])
+        return self._desc['dependencies']
+
+    @property
+    def service_dependencies(self):
+        return filter(lambda d: 'service' in d, self.dependencies)
+
+    @property
+    def image_dependencies(self):
+        return filter(lambda d: 'image' in d, self.dependencies)
+
+    @property
+    def build_dependencies(self):
+        return filter(lambda d: '_build' in d, self.dependencies)
 
     @property
     def path(self):
         return os.path.join(project.services_dir, self.name)
-
-    @property
-    def image_dependency(self):
-        service_type = self._desc.get('type')
-        return SERVICE_TYPE_IMAGES.get(service_type)
