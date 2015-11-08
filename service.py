@@ -4,6 +4,10 @@ import yaml
 
 from project import project
 
+SERVICE_TYPE_IMAGES = {
+    'python': 'paperboy-service-python'
+}
+
 
 class InvalidServiceError(ValueError):
     """Raised when a service is invalid.
@@ -38,6 +42,10 @@ def _desc_service(name):
             desc['name'], name)
         raise InvalidServiceError(msg)
 
+    if 'type' in desc and desc['type'] not in SERVICE_TYPE_IMAGES:
+        msg = 'Unknown type \'{}\''.format(desc['type'])
+        raise InvalidServiceError(msg)
+
     return desc
 
 class Service(object):
@@ -48,3 +56,12 @@ class Service(object):
     @property
     def dependencies(self):
         return self._desc.get('dependencies', [])
+
+    @property
+    def path(self):
+        return os.path.join(project.services_dir, self.name)
+
+    @property
+    def image_dependency(self):
+        service_type = self._desc.get('type')
+        return SERVICE_TYPE_IMAGES.get(service_type)
