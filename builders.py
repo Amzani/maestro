@@ -42,8 +42,6 @@ class Builder(object):
         with fsutils.pushd(build_dir):
             self._actions[action](self, target)
 
-        shutil.rmtree(build_dir, ignore_errors=True)
-
     @classmethod
     def from_name(cls, name):
         """Returns the Builder instance for the given builder name"""
@@ -87,11 +85,11 @@ class ServiceBuilder(Builder):
         deps = itertools.chain(
             service.image_dependencies, service.build_dependencies)
         for image in deps:
-            target = next(iter(image.values()))
-            Builder.from_name('image').call('build', target)
+            rec_target = next(iter(image.values()))
+            Builder.from_name('image').call('build', rec_target)
 
         fsutils.clone(service.path, '.')
-        fsutils.clone(project.thrift_dir, 'thrift')
+        fsutils.clone(project.thrift_dir, os.path.join('thrift', 'shared'))
 
         docker_image_name = 'paperboy-s-' + target
         subprocess.run(('docker', 'build', '-t', docker_image_name, '.'))
