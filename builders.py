@@ -5,9 +5,10 @@ import subprocess
 import sys
 
 import fsutils
+import project
 
-from project import project
-from service import Service
+from graph import DependencyGraph
+from graph import Image
 
 
 def action(func):
@@ -65,35 +66,15 @@ class ImageBuilder(Builder):
         image directory is copied in the build directory, followed by
         the content of the "<paperboy_root>/thrift/" directory.
         """
-        image_dir = os.path.join(project.images_dir, target)
-        if not os.path.isdir(image_dir):
-            msg = 'Unknown image \'{}\'. Assuming it already exists.'.format(target)
-            print(msg, file=sys.stderr)
-            return
-
-        fsutils.clone(image_dir, '.')
-        fsutils.clone(project.thrift_dir, '.')
-        subprocess.run(('docker', 'build', '-t', target, '.'))
+        image = Image.from_name(target)
+        image.build()
 
 
 class ServiceBuilder(Builder):
     @action
     def build(self, target):
-        service = Service(target)
-
-        # Build the images the service might depend on
-        deps = itertools.chain(
-            service.image_dependencies, service.build_dependencies)
-        for image in deps:
-            rec_target = next(iter(image.values()))
-            Builder.from_name('image').call('build', rec_target)
-
-        fsutils.clone(service.path, '.')
-        fsutils.clone(project.thrift_dir, os.path.join('thrift', 'shared'))
-
-        docker_image_name = 'paperboy-s-' + target
-        subprocess.run(('docker', 'build', '-t', docker_image_name, '.'))
-
+        graph = DependencyGraph.for_service(target)
+        graph.visit_dfs(lambda n: n.build())
 
     @action
     def test(self, target):
