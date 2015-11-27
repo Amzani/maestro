@@ -56,7 +56,7 @@ class Builder(object):
 
 class ImageBuilder(Builder):
     """Builder to manage pure Docker images under the
-    "<paperboy_root>/image/" directory.
+    "<project_root>/image/" directory.
     """
     @action
     def build(self, target):
@@ -64,7 +64,7 @@ class ImageBuilder(Builder):
 
         The built is done in a fresh directory. The content of the
         image directory is copied in the build directory, followed by
-        the content of the "<paperboy_root>/thrift/" directory.
+        the content of the "<project_root>/thrift/" directory.
         """
         image = Image.from_name(target)
         image.build()

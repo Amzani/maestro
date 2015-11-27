@@ -9,12 +9,12 @@ def parse_args():
     parser = argparse.ArgumentParser(
         prog='maestro',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description='The paperboy build tool.',
+        description='The best SOA build tool.',
         epilog=textwrap.dedent('''\
         examples:
-            maestro image build paperboy-service-python
-            maestro service build users
-            maestro service test social-accounts
+            maestro image build my-image
+            maestro service build my-service-foo
+            maestro service test my-service-foo
         '''))
     parser.add_argument('builder', type=str,
                         choices=['image', 'service'],
