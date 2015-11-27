@@ -106,7 +106,6 @@ class Image(Node):
             return
 
         fsutils.clone(image_dir, '.')
-        fsutils.clone(project.thrift_dir, '.')
 
         call = subprocess.run(('docker', 'build', '-t', self.name, '.'))
         return call.returncode != 0
@@ -134,7 +133,6 @@ class Service(Node):
 
     def build(self):
         fsutils.clone(self.path, '.')
-        fsutils.clone(project.thrift_dir, os.path.join('thrift', 'shared'))
 
         docker_image_name = 'maestro-s-' + self.name
         call = subprocess.run(('docker', 'build', '-t', docker_image_name, '.'))
