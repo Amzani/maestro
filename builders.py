@@ -63,8 +63,7 @@ class ImageBuilder(Builder):
         """Build the Docker image with the given target name.
 
         The built is done in a fresh directory. The content of the
-        image directory is copied in the build directory, followed by
-        the content of the "<project_root>/thrift/" directory.
+        image directory is copied in the build directory.
         """
         image = Image.from_name(target)
         image.build()
