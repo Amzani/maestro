@@ -7,6 +7,7 @@ from enum import Enum
 
 import networkx as nx
 
+from . import docker
 from . import fsutils
 from . import project
 
@@ -108,13 +109,7 @@ class Image(Node):
             return
 
         fsutils.clone(image_dir, '.')
-
-        call = subprocess.run(
-            ('docker', 'build', '-t', self.name, '.'),
-            stdout=subprocess.PIPE)
-        if call.returncode != 0 or verbose:
-            print(call.stdout.decode('utf-8'))
-        return call.returncode != 0
+        return docker.build('.', self.name, verbose=verbose)
 
     @classmethod
     def from_name(cls, name):
@@ -141,14 +136,7 @@ class Service(Node):
         print('>>> Building service \'{}\''.format(self.name))
 
         fsutils.clone(self.path, '.')
-
-        docker_image_name = 'maestro-s-' + self.name
-        call = subprocess.run(
-            ('docker', 'build', '-t', docker_image_name, '.'),
-            stdout=subprocess.PIPE)
-        if call.returncode != 0 or verbose:
-            print(call.stdout.decode('utf-8'))
-        return call.returncode != 0
+        return docker.build('.', 'maestro-s-' + self.name, verbose=verbose)
 
     @classmethod
     def from_name(cls, name):
