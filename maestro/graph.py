@@ -7,8 +7,8 @@ from enum import Enum
 
 import networkx as nx
 
-import fsutils
-import project
+from . import fsutils
+from . import project
 
 
 class InvalidServiceError(ValueError):

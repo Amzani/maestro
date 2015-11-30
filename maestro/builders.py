@@ -4,11 +4,11 @@ import shutil
 import subprocess
 import sys
 
-import fsutils
-import project
+from . import fsutils
+from . import project
 
-from graph import DependencyGraph
-from graph import Image
+from .graph import DependencyGraph
+from .graph import Image
 
 
 def action(func):

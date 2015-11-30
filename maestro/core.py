@@ -1,9 +1,7 @@
-#!/usr/bin/env python
-
 import argparse
 import textwrap
 
-from builders import Builder
+from .builders import Builder
 
 def parse_args():
     parser = argparse.ArgumentParser(
