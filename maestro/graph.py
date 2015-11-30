@@ -10,6 +10,7 @@ import networkx as nx
 from . import docker
 from . import fsutils
 from . import project
+from .config import ServiceConfig
 
 
 class InvalidServiceError(ValueError):
@@ -63,7 +64,9 @@ class DependencyGraph(object):
         dg._add_root_node(service)
 
         for dep in service.dependencies:
-            if 'image' in dep:
+            if '_build' in dep:
+                sub_dg = cls.for_image(dep['_build'])
+            elif 'image' in dep:
                 sub_dg = cls.for_image(dep['image'])
             elif 'service' in dep:
                 sub_dg = cls.for_service(dep['service'])
@@ -122,7 +125,8 @@ _services = {}
 class Service(Node):
     def __init__(self, name):
         super().__init__(name)
-        self._desc = _desc_service(name)
+        config_file = os.path.join(self.path, 'maestro.yml')
+        self._config = ServiceConfig(config_file, name)
 
     @property
     def path(self):
@@ -130,7 +134,7 @@ class Service(Node):
 
     @property
     def dependencies(self):
-        return self._desc['dependencies']
+        return self._config.dependencies
 
     def build(self, verbose=False):
         print('>>> Building service \'{}\''.format(self.name))
@@ -143,59 +147,3 @@ class Service(Node):
         if name not in _services:
             _services[name] = Service(name)
         return _services[name]
-
-
-SERVICE_TYPE_IMAGES = {
-    'python': 'maestro-base-python'
-}
-
-
-def _desc_service(name):
-    desc_file_path = os.path.join(project.services_dir, name, 'service.yml')
-
-    try:
-        with open(desc_file_path) as desc_file:
-            desc = yaml.load(desc_file)
-    except (FileNotFoundError, yaml.YAMLError) as e:
-        raise InvalidServiceError(e)
-
-    # Check that the description is valid
-    fields = desc.keys() if desc is not None else set()
-    required_fields = set(('name',))
-    missing_fields = required_fields.difference(fields)
-
-    if len(missing_fields) > 0:
-        msg = 'Missing \'{}\' field{}.'.format(
-            ','.join(missing_fields),
-            '' if len(missing_fields) == 1 else 's')
-        raise InvalidServiceError(msg)
-
-    if desc['name'] != name:
-        msg = 'Names do not match (\'{}\' against \'{}\')'.format(
-            desc['name'], name)
-        raise InvalidServiceError(msg)
-
-    # Process dependencies, and add service type image to them
-    if 'dependencies' not in desc:
-        desc['dependencies'] = []
-
-    if 'type' in desc:
-        if desc['type'] not in SERVICE_TYPE_IMAGES:
-            msg = 'Unknown type \'{}\''.format(desc['type'])
-            raise InvalidServiceError(msg)
-        desc['dependencies'].append({
-            'image': SERVICE_TYPE_IMAGES[desc['type']]
-        })
-
-    for dep in desc['dependencies']:
-        if not isinstance(dep, dict):
-            msg = 'Invalid dependency: not an association.'
-            raise InvalidServiceError(msg)
-        if len(dep.keys()) != 1:
-            msg = 'Invalid dependency: more than one association.'
-            raise InvalidServiceError(msg)
-        if len(dep.keys() & set(('image', 'service'))) != 1:
-            msg = 'Invalid dependency: not a \'service\' or \'image\''
-            raise InvalidServiceError(msg)
-
-    return desc
