@@ -7,6 +7,7 @@ import sys
 from . import fsutils
 from . import project
 
+from .context import ExecContext
 from .graph import DependencyGraph
 from .graph import Image
 
@@ -21,7 +22,8 @@ class Builder(object):
 
     Use the call method to call an action on a target.
     """
-    def __init__(self):
+    def __init__(self, exec_ctx=ExecContext()):
+        self.ctx = exec_ctx
         self._actions = {
             name: func
             for name, func in self.__class__.__dict__.items()
@@ -44,12 +46,12 @@ class Builder(object):
             self._actions[action](self, target)
 
     @classmethod
-    def from_name(cls, name):
+    def from_name(cls, name, exec_ctx=ExecContext()):
         """Returns the Builder instance for the given builder name"""
         builder = {
             'image': ImageBuilder,
             'service': ServiceBuilder,
-        }[name]()
+        }[name](exec_ctx)
         builder._name = name
         return builder
 
@@ -66,14 +68,14 @@ class ImageBuilder(Builder):
         image directory is copied in the build directory.
         """
         image = Image.from_name(target)
-        image.build()
+        image.build(verbose=(self.ctx.verbosity > 0))
 
 
 class ServiceBuilder(Builder):
     @action
     def build(self, target):
         graph = DependencyGraph.for_service(target)
-        graph.visit_dfs(lambda n: n.build())
+        graph.visit_dfs(lambda n: n.build(verbose=(self.ctx.verbosity > 0)))
 
     @action
     def test(self, target):

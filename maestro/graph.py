@@ -98,7 +98,9 @@ class Node(object):
 
 _images = {}
 class Image(Node):
-    def build(self):
+    def build(self, verbose=False):
+        print('>>> Building image \'{}\''.format(self.name))
+
         image_dir = os.path.join(project.images_dir, self.name)
         if not os.path.isdir(image_dir):
             msg = 'Unknown image \'{}\'. Assuming it already exists.'.format(self.name)
@@ -107,7 +109,11 @@ class Image(Node):
 
         fsutils.clone(image_dir, '.')
 
-        call = subprocess.run(('docker', 'build', '-t', self.name, '.'))
+        call = subprocess.run(
+            ('docker', 'build', '-t', self.name, '.'),
+            stdout=subprocess.PIPE)
+        if call.returncode != 0 or verbose:
+            print(call.stdout.decode('utf-8'))
         return call.returncode != 0
 
     @classmethod
@@ -131,11 +137,17 @@ class Service(Node):
     def dependencies(self):
         return self._desc['dependencies']
 
-    def build(self):
+    def build(self, verbose=False):
+        print('>>> Building service \'{}\''.format(self.name))
+
         fsutils.clone(self.path, '.')
 
         docker_image_name = 'maestro-s-' + self.name
-        call = subprocess.run(('docker', 'build', '-t', docker_image_name, '.'))
+        call = subprocess.run(
+            ('docker', 'build', '-t', docker_image_name, '.'),
+            stdout=subprocess.PIPE)
+        if call.returncode != 0 or verbose:
+            print(call.stdout.decode('utf-8'))
         return call.returncode != 0
 
     @classmethod
