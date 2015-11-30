@@ -25,6 +25,11 @@ class ServiceConfig(dict):
         self.load()
         self.validate()
 
+        # Add the image of the services type as a dependency
+        self.dependencies.append({
+            '_build': 'maestro-base-' + self.type
+        })
+
     def __getattr__(self, item):
         try:
             return self[item]
@@ -39,8 +44,6 @@ class ServiceConfig(dict):
             raise InvalidConfig(self._path, str(s))
 
     def validate(self):
-        print(self)
-
         # Check for missing fields
         missing_fields = set(self.REQUIRED).difference(self.keys())
         if len(missing_fields) > 0:
@@ -56,7 +59,37 @@ class ServiceConfig(dict):
                 getattr(self, fn_name)()
 
     def validate_name(self):
+        if not isinstance(self.type, str):
+            msg = 'Missing string value for \'name\' field.'
+            raise InvalidConfig(self._path, msg)
+
         if self.name != self._name:
             msg = 'Names do not match. Expecting \'{}\', got \'{}\''.format(
                 self.name, self._name)
             raise InvalidConfig(self._path, msg)
+
+    def validate_type(self):
+        if not isinstance(self.type, str):
+            msg = 'Missing string value for \'type\' field.'
+            raise InvalidConfig(self._path, msg)
+
+    def validate_dependencies(self):
+        if not isinstance(self.dependencies, list):
+            msg = 'Missing list value for \'dependencies\' field.'
+            raise InvalidConfig(self._path, msg)
+
+        for dep in self.dependencies:
+            if not isinstance(dep, dict):
+                fmt = 'Invalid dependency \'{}\': not an association.'
+                raise InvalidConfig(self._path, fmt.format(dep))
+            if len(dep.keys()) != 1:
+                fmt = 'Invalid dependency \'{}\': more than one association.'
+                raise InvalidConfig(self._path, fmt.format(dep))
+
+            dep_type, name = next(iter(dep.items()))
+            if dep_type not in ('image', 'service'):
+                fmt = 'Invalid dependency \'{}\': not a \'service\' or \'image\'.'
+                raise InvalidConfig(self._path, fmt.format(dep))
+            if not isinstance(name, str):
+                fmt = 'Invalid dependency \'{}\': Missing string value for a dependency field.'
+                raise InvalidConfig(self._path, fmt.format(dep))
