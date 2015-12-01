@@ -11,7 +11,7 @@ def main():
     cli.parser.parse_args(namespace=ctx)
 
     builder = Builder.from_name(ctx.builder, exec_ctx=ctx)
-    builder.call(ctx.action, ctx.target)
+    builder.call(ctx.action, ctx.target, ctx.args)
 
 if __name__ == '__main__':
     main()

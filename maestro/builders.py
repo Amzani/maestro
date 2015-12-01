@@ -30,7 +30,7 @@ class Builder(object):
             if hasattr(func, '_action')
         }
 
-    def call(self, action, target):
+    def call(self, action, target, args=[]):
         """Call the given action on the given target"""
         if action not in self._actions:
             msg = 'Unknown action \'{}\'. Possible actions are: {}'.format(
@@ -43,7 +43,7 @@ class Builder(object):
         shutil.rmtree(build_dir, ignore_errors=True)
 
         with fsutils.pushd(build_dir):
-            self._actions[action](self, target)
+            self._actions[action](self, target, args)
 
     @classmethod
     def from_name(cls, name, exec_ctx=ExecContext()):
@@ -61,7 +61,7 @@ class ImageBuilder(Builder):
     "<project_root>/image/" directory.
     """
     @action
-    def build(self, target):
+    def build(self, target, args=[]):
         """Build the Docker image with the given target name.
 
         The built is done in a fresh directory. The content of the
@@ -73,10 +73,10 @@ class ImageBuilder(Builder):
 
 class ServiceBuilder(Builder):
     @action
-    def build(self, target):
+    def build(self, target, args=[]):
         graph = DependencyGraph.for_service(target)
         graph.visit_dfs(lambda n: n.build(verbose=(self.ctx.verbosity > 0)))
 
     @action
-    def test(self, target):
-        print('ServiceBuilder: {}'.format(target))
+    def run(self, target, args=[]):
+        print('Runing {} with {}'.format(target, args))
