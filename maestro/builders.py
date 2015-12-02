@@ -7,6 +7,7 @@ import sys
 from . import fsutils
 from . import project
 
+from .compose import Compose
 from .context import ExecContext
 from .graph import DependencyGraph
 from .graph import Image
@@ -79,4 +80,10 @@ class ServiceBuilder(Builder):
 
     @action
     def run(self, target, args=[]):
-        print('Runing {} with {}'.format(target, args))
+        # We must build first
+        Builder.from_name('service').call('build', target)
+
+        graph = DependencyGraph.for_service(target)
+
+        compose = Compose.from_graph(graph)
+        compose.run(args[0] if len(args) > 0 else target)
