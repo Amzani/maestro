@@ -38,6 +38,9 @@ class DependencyGraph(object):
         self._g = nx.freeze(self._g)
         return self
 
+    def neighbors(self, n):
+        return self._g.neighbors_iter(n)
+
     def visit_dfs(self, f):
         for node in nx.dfs_postorder_nodes(self._g, self.root):
             if f(node):
