@@ -38,14 +38,17 @@ class DependencyGraph(object):
         self._g = nx.freeze(self._g)
         return self
 
+    def neighbors(self, n):
+        return self._g.neighbors_iter(n)
+
     def visit_dfs(self, f):
         for node in nx.dfs_postorder_nodes(self._g, self.root):
             if f(node):
                 return
 
     @classmethod
-    def for_image(cls, image_name):
-        image = Image.from_name(image_name)
+    def for_image(cls, image_name, hidden=False):
+        image = Image.from_name(image_name, hidden)
 
         dg = DependencyGraph()
         dg._add_root_node(image)
@@ -65,7 +68,7 @@ class DependencyGraph(object):
 
         for dep in service.dependencies:
             if '_build' in dep:
-                sub_dg = cls.for_image(dep['_build'])
+                sub_dg = cls.for_image(dep['_build'], True)
             elif 'image' in dep:
                 sub_dg = cls.for_image(dep['image'])
             elif 'service' in dep:
@@ -89,8 +92,9 @@ class NodeState(Enum):
 class Node(object):
     """An abstract element of the dependency graph.
     """
-    def __init__(self, name):
+    def __init__(self, name, hidden=False):
         self.name = name
+        self.hidden = hidden
         self._state = NodeState.white
 
     def __str__(self):
@@ -115,9 +119,9 @@ class Image(Node):
         return docker.build('.', self.name, verbose=verbose)
 
     @classmethod
-    def from_name(cls, name):
+    def from_name(cls, name, hidden=False):
         if name not in _images:
-            _images[name] = Image(name)
+            _images[name] = Image(name, hidden)
         return _images[name]
 
 

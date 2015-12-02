@@ -37,6 +37,10 @@ positional.add_argument(
     'target', type=str,
     help='target on which the builder must perform the action')
 
+positional.add_argument(
+    'args', type=str, nargs='*',
+    help='additional arguments given to the action')
+
 
 # Optional argument
 
