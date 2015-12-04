@@ -1,3 +1,4 @@
+from contextlib import suppress
 import copy
 import subprocess
 
@@ -37,8 +38,12 @@ class Compose(object):
 
         print('>>> Running service \'{}\' and it\'s dependencies'.format(service))
 
-        cmd = ('docker-compose', 'up', '--no-recreate', service)
-        call = subprocess.run(cmd)
+        call = None
+        with suppress(KeyboardInterrupt):
+            cmd = ('docker-compose', 'up', '--no-recreate', service)
+            call = subprocess.Popen(cmd)
+            call.wait()
+        call.wait() # This time, ctrl-c will really kill us
 
         print('>>> Killing service \'{}\' and it\'s dependencies'.format(service))
 
