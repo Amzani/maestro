@@ -12,6 +12,7 @@ class InvalidConfig(ValueError):
 class ServiceConfig(dict):
     DEFAULTS = {
         'dependencies': [],
+        'run': {},
     }
 
     REQUIRED = ('name', 'type')
@@ -93,3 +94,8 @@ class ServiceConfig(dict):
             if not isinstance(name, str):
                 fmt = 'Invalid dependency \'{}\': Missing string value for a dependency field.'
                 raise InvalidConfig(self._path, fmt.format(dep))
+
+    def validate_run(self):
+        if not isinstance(self.run, dict):
+            msg = 'Missing dict value for \'run\' field.'
+            raise InvalidConfig(self._path, msg)
