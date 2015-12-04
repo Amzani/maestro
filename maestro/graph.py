@@ -140,6 +140,10 @@ class Service(Node):
     def dependencies(self):
         return self._config.dependencies
 
+    @property
+    def run_configs(self):
+        return self._config.run
+
     def build(self, verbose=False):
         print('>>> Building service \'{}\''.format(self.name))
 
