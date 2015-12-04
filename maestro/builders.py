@@ -80,10 +80,28 @@ class ServiceBuilder(Builder):
 
     @action
     def run(self, target, args=[]):
+        action = args[0] if len(args) > 0 else 'default'
+
         # We must build first
         Builder.from_name('service').call('build', target)
 
         graph = DependencyGraph.for_service(target)
-
         compose = Compose.from_graph(graph)
-        compose.run(args[0] if len(args) > 0 else target)
+
+        action = args[0] if len(args) > 0 else 'default'
+        extended_config = graph.root.run_configs.get(action, {})
+
+        # If an argument was given, add a new entry in compose as an
+        # extended copy of target. Else, just extend target.
+        if action == 'default':
+            action = target
+            compose.extend(action, extended_config)
+        else:
+            compose.extend(action, extended_config, copy_of=target)
+
+        compose.export()
+
+        with open('docker-compose.yml', 'r') as f:
+            print(f.read())
+
+        compose.run(action)
