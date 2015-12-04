@@ -1,3 +1,4 @@
+import copy
 import subprocess
 
 import yaml
@@ -17,12 +18,15 @@ class Compose(object):
             data = yaml.dump(self._mapping, default_flow_style=False)
             f.write(data)
 
-    def kill(self, *args):
-        cmd = ['docker-compose', 'kill']
+    def extend(self, service, config, copy_of=None):
+        if copy_of is not None:
+            self._mapping[service] = copy.deepcopy(self._mapping[copy_of])
+            self._mapping[service]['links']  = [copy_of]
 
-        if len(args) > 0:
-            cmd += args
-        call = subprocess.run(cmd)
+        self._mapping[service].update(config)
+
+    def kill(self, *args):
+        call = subprocess.run(['docker-compose', 'kill'] + list(args))
         return call.returncode == 0
 
     def run(self, service):
