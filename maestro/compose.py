@@ -27,8 +27,8 @@ class Compose(object):
         self._mapping[service].update(config)
 
     def kill(self, *args):
-        call = subprocess.run(['docker-compose', 'kill'] + list(args))
-        return call.returncode == 0
+        subprocess.run(['docker-compose', 'kill'] + list(args))
+        subprocess.run(('docker-compose', 'rm', '-f'))
 
     def run(self, service):
         """Run the 'docker-compose run <service>' command after
