@@ -99,9 +99,9 @@ class ServiceBuilder(Builder):
         else:
             compose.extend(action, extended_config, copy_of=target)
 
-        compose.export()
-
-        with open('docker-compose.yml', 'r') as f:
-            print(f.read())
+        if self.ctx.verbosity > 0:
+            compose.export()
+            with open('docker-compose.yml', 'r') as f:
+                print(f.read())
 
         compose.run(action)
