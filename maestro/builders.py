@@ -83,7 +83,7 @@ class ServiceBuilder(Builder):
         action = args[0] if len(args) > 0 else 'default'
 
         # We must build first
-        Builder.from_name('service').call('build', target)
+        Builder.from_name('service', self.ctx).call('build', target)
 
         graph = DependencyGraph.for_service(target)
         compose = Compose.from_graph(graph)
@@ -99,9 +99,9 @@ class ServiceBuilder(Builder):
         else:
             compose.extend(action, extended_config, copy_of=target)
 
-        compose.export()
-
-        with open('docker-compose.yml', 'r') as f:
-            print(f.read())
+        if self.ctx.verbosity > 0:
+            compose.export()
+            with open('docker-compose.yml', 'r') as f:
+                print(f.read())
 
         compose.run(action)
