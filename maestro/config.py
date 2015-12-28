@@ -1,3 +1,4 @@
+import copy
 import yaml
 
 
@@ -21,7 +22,7 @@ class ServiceConfig(dict):
         self._path = path
         self._name = name
 
-        self.update(self.DEFAULTS)
+        self.update(copy.deepcopy(self.DEFAULTS))
 
         self.load()
         self.validate()
